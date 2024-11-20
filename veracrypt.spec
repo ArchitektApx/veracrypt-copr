@@ -5,9 +5,8 @@
 
 Summary:       Open-source utility for on-the-fly encryption
 Name:          veracrypt
-Epoch:         1
-Version:       %(echo %{veracrypt_version} | tr -s '-' '.')
-Release:       3%{?dist}
+Version:       1.26.14
+Release:       1%{?dist}
 License:       ASL 2.0 and TrueCrypt License 3.0
 URL:           https://www.veracrypt.fr/en/Home.html
 Source0:       https://www.veracrypt.fr/code/VeraCrypt/snapshot/VeraCrypt-VeraCrypt_%{veracrypt_version}.tar.gz
@@ -17,15 +16,18 @@ Patch1:        make-flags.patch
 BuildRequires: fuse-devel
 BuildRequires: gcc-c++
 BuildRequires: gtk2-devel
+BuildRequires: gtk3-devel
 BuildRequires: make
 BuildRequires: pcsc-lite-devel
 BuildRequires: pkgconf-pkg-config
 BuildRequires: yasm
+BuildRequires: mesa-libGL-devel
+BuildRequires: mesa-libEGL-devel
 
 Requires:      fuse-libs
-Requires:      gtk2
+Requires:      gtk3
 Requires:      pcsc-lite-libs
-Provides:      veracrypt(bin) = %{epoch}:%{version}-%{release}
+Provides:      veracrypt(bin) = %{version}-%{release}
 
 %description
 VeraCrypt is a free open source disk encryption software for Windows, Mac OSX and Linux. Brought to
@@ -38,7 +40,7 @@ tar -xf '%{SOURCE1}'
 %build
 %set_build_flags
 %make_build WXSTATIC=1 WX_ROOT=%{_builddir}/wxWidgets-%{wxwidgets_version} wxbuild
-%make_build WXSTATIC=1
+%make_build WXSTATIC=1 NOSTRIP=1
 
 %install
 %make_install
