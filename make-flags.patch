@@ -1,8 +1,8 @@
 diff --git a/src/Makefile b/src/Makefile
-index 4bea83b4..a0233be2 100644
+index 15af9c6..0c52d29 100644
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -43,11 +43,11 @@ export CXX ?= g++
+@@ -44,11 +44,11 @@ export CXX ?= g++
  export AS := yasm
  export RANLIB ?= ranlib
  
