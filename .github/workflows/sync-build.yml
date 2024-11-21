@@ -1,0 +1,89 @@
+name: Sync Upstream Version
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      needs_update: ${{ steps.check-version.outputs.needs_update }}
+      VERACRYPT_VER: ${{ steps.check-version.outputs.VERACRYPT_VER }}
+      WX_VER: ${{ steps.check-version.outputs.WX_VER }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: check for new upstream version
+        id: check-version
+        run: |
+          git fetch --tags
+          LOCAL_TAG=$(git describe --tags --abbrev=0)
+          VERACRYPT_VER=$(curl -s https://api.github.com/repos/veracrypt/veracrypt/releases/latest | jq -r '.tag_name' | sed 's/VeraCrypt_//')
+          WX_VER=$(curl -s https://api.github.com/repos/wxWidgets/wxWidgets/releases/latest | jq -r '.tag_name' | sed 's/v//')
+
+          # check if new version is available and new version starts with a digit
+          NEEDS_UPDATE=false
+          echo "Current veracrypt version: $LOCAL_TAG"
+          if [ "$LOCAL_TAG" != "$VERACRYPT_VER" ] && [[ $VERACRYPT_VER =~ ^[0-9] ]]; then
+            echo "New veracrypt version available: $VERACRYPT_VER"
+            if [ "$WX_VER" != "$WX_VER" ]; then
+              echo "New wxWidgets version available: $WX_VER"
+            fi
+
+            NEEDS_UPDATE=true
+          else
+            echo "No new veracrypt version available"
+            if [ "$WX_VER" != "$WX_VER" ]; then
+              echo "New wxWidgets version available: $WX_VER"
+              echo "wxWidgets will be updated on the next veracrypt release"
+            fi
+          fi
+
+          # write output so next steps can use it to skip if no new version
+          echo "VERACRYPT_VER=$VERACRYPT_VER" >> $GITHUB_ENV
+          echo "WX_VER=$WX_VER" >> $GITHUB_ENV
+          echo "VERACRYPT_VER=$VERACRYPT_VER" >> $GITHUB_OUTPUT
+          echo "WX_VER=$WX_VER" >> $GITHUB_OUTPUT
+          echo "needs_update=$NEEDS_UPDATE" >> $GITHUB_OUTPUT
+
+      - name: Setup git bot
+        if: steps.check-version.outputs.needs_update == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update veracrypt spec file
+        if: steps.check-version.outputs.needs_update == 'true'
+        run: |
+          # update spec file veraCrypt version
+          # change %define veracrypt_version 1.26.14 to new version
+          sed -i 's/%define veracrypt_version .*/%define veracrypt_version '$VERACRYPT_VER'/' veracrypt.spec
+          sed -i '0,/Version:.*/s//Version:            '$VERACRYPT_VER'/' veracrypt.spec
+
+          # update spec file wxWidgets version
+          # change %define wxwidgets_version 3.2.6 to new version
+          sed -i 's/%define wxwidgets_version .*/%define wxwidgets_version '$WX_VER'/' veracrypt.spec
+  
+          CHANGELOG="- Official changelog at https://github.com/veracrypt/VeraCrypt/releases/tag/VeraCrypt_$VERACRYPT_VER"
+          OLD_CHANGELOG="$(sed -n '/%changelog/,$p' veracrypt.spec | sed '1d')"
+
+          # create new changelog line with current date and commit message
+          NEW_CHANGELOG="$(echo -e "* $(date +'%a %b %d %Y') ArchitektApx <architektapx@gehinors.ch> - $VERACRYPT_VER\n$CHANGELOG\n\n$OLD_CHANGELOG")"
+
+          # replace old changelog with new one
+          sed -i '/%changelog/,$d' veracrypt.spec
+          echo -e "%changelog\n$NEW_CHANGELOG" >> veracrypt.spec
+          git add veracrypt.spec
+
+      - name: commit and tag new version
+        if: steps.check-version.outputs.needs_update == 'true'
+        id: commit-update
+        run: |
+          git commit -m "chore(veracrypt): Sync Veracrypt Spec to $VERACRYPT_VER"
+          git tag $VERACRYPT_VER
+          git push 
+          git push --tags
+          echo "commit-id=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
