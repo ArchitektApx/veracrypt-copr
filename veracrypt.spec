@@ -1,11 +1,11 @@
 %global _hardened_build 1
 
-%define veracrypt_version 1.26.15
+%define veracrypt_version 1.26.18
 %define wxwidgets_version 3.2.6
 
 Summary:       Open-source utility for on-the-fly encryption
 Name:          veracrypt
-Version:            1.26.15
+Version:            1.26.18
 Release:       1%{?dist}
 License:       ASL 2.0 and TrueCrypt License 3.0
 URL:           https://www.veracrypt.fr/en/Home.html
@@ -59,6 +59,9 @@ rm -f %{buildroot}%{_bindir}/veracrypt-uninstall.sh
 %doc %{_datadir}/doc/veracrypt/HTML/*
 
 %changelog
+* Thu Jan 23 2025 ArchitektApx <architektapx@gehinors.ch> - 1.26.18
+- Official changelog at https://github.com/veracrypt/VeraCrypt/releases/tag/VeraCrypt_1.26.18
+
 * Thu Nov 21 2024 ArchitektApx <architektapx@gehinors.ch> - 1.26.15
 - Official changelog at https://github.com/veracrypt/VeraCrypt/releases/tag/VeraCrypt_1.26.15
 
