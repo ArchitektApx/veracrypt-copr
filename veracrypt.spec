@@ -50,7 +50,7 @@ rm -f %{buildroot}%{_bindir}/veracrypt-uninstall.sh
 
 %files
 %{_bindir}/veracrypt
-%{_sbindir}/mount.veracrypt
+%{_bindir}/mount.veracrypt
 %{_datadir}/applications/veracrypt.desktop
 %{_datadir}/mime/packages/veracrypt.xml
 %{_datadir}/pixmaps/veracrypt.xpm
